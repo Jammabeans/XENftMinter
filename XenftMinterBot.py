@@ -137,11 +137,26 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                 txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=300)
             except web3.exceptions.TimeExhausted:
                 current_gas_price = w3.eth.gas_price
-                if current_gas_price > gas_price:
+                if current_gas_price <= max_gas_price:
+                    # Replace the transaction with a higher gas price
+                    status_label.config(text=f'Transaction {i+1} still pending, replacing with a higher gas price...')
+                    gas_price = current_gas_price
+                    txn['gasPrice'] = gas_price
+
+                    # Sign the transaction again with the new gas price
+                    signed_txn = w3.eth.account.sign_transaction(txn, private_key)
+
+                    # Send the signed transaction and get the new transaction hash
+                    txn_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+                    # Wait for the replaced transaction to be confirmed
+                    txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=1800)
+                elif current_gas_price > gas_price:
                     status_label.config(text=f'Transaction {i+1} still pending due to gas price spike, waiting...')
                     txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=1800)  # Wait longer, e.g., 1800 seconds
                 else:
                     raise  # Re-raise the exception if the gas price hasn't spiked
+
                 
             # Update the status label with the block number the transaction was confirmed in
             status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
