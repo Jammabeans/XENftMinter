@@ -144,10 +144,11 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
 
                 # Sleep for 5 seconds before the next iteration
                 time.sleep(5)
-        else:
-            # If the gas price is too high, update the status label and wait for 60 seconds
-            status_label.config(text=f'Gas price too high: {gas_price}, waiting...')
-            time.sleep(60)
+            else:
+                # If the gas price is too high, update the status label and wait for 60 seconds
+                gas_price_gwei = w3.from_wei(gas_price, 'gwei')
+                status_label.config(text=f'Gas price too high: {gas_price_gwei:.4f} Gwei, waiting...')
+                time.sleep(60)
 
     except Exception as e:
         # If there is an unexpected error, update the UI background color and status label
