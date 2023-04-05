@@ -71,36 +71,41 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                 status_label.config(text=f'Stopped at transaction {i+1}')
                 break
 
-                
             gas_price = w3.eth.gas_price
 
-            # Check if the gas price is within the specified limit
-            if gas_price <= max_gas_price:
-                # Create a function call to bulkClaimRank with the given count and term
-                function_call = contract.functions.bulkClaimRank(count, term)
-                
-                # Estimate the gas needed for the transaction
-                gas_estimate = function_call.estimate_gas({'from': my_address})
+            # Loop until the gas price is within the specified limit
+            while gas_price > max_gas_price:
+                # If the gas price is too high, update the status label and wait for 60 seconds
+                gas_price_gwei = w3.from_wei(gas_price, 'gwei')
+                status_label.config(text=f'Gas price too high: {gas_price_gwei:.4f} Gwei, waiting...')
+                time.sleep(60)
+                gas_price = w3.eth.gas_price
 
-                        
-                # Build the transaction object
-                transaction_data = function_call._encode_transaction_data()
-                txn = {
-                    'from': my_address,
-                    'to': contract_address,
-                    'gas': gas_estimate,
-                    'gasPrice': gas_price,
-                    'nonce': nonce,
-                    'chainId': chain_id,
-                    'data': transaction_data,
-                }
+            # Create a function call to bulkClaimRank with the given count and term
+            function_call = contract.functions.bulkClaimRank(count, term)
 
-                # Sign the transaction using the private key and chain ID
-                signed_txn = w3.eth.account.sign_transaction(txn, private_key)
+            # Estimate the gas needed for the transaction
+            gas_estimate = function_call.estimate_gas({'from': my_address})
+
+            # Build the transaction object
+            transaction_data = function_call._encode_transaction_data()
+            txn = {
+                'from': my_address,
+                'to': contract_address,
+                'gas': gas_estimate,
+                'gasPrice': gas_price,
+                'nonce': nonce,
+                'chainId': chain_id,
+                'data': transaction_data,
+            }
+    
+
+            # Sign the transaction using the private key and chain ID
+            signed_txn = w3.eth.account.sign_transaction(txn, private_key)
                 
-                # Send the signed transaction and get the transaction hash
-                retry = True
-                while retry:
+            # Send the signed transaction and get the transaction hash
+            retry = True
+            while retry:
                     try:
                         txn_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
                         retry = False
@@ -124,44 +129,44 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
 
 
 
-                # Update the status label with the transaction hash
-                status_label.config(text=f'Sent transaction {i+1} with hash {txn_hash.hex()}')
+            # Update the status label with the transaction hash
+            status_label.config(text=f'Sent transaction {i+1} with hash {txn_hash.hex()}')
 
 
-                try:
-                    txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=300)
-                except web3.exceptions.TimeExhausted:
-                    current_gas_price = w3.eth.gas_price
-                    if current_gas_price > gas_price:
-                        status_label.config(text=f'Transaction {i+1} still pending due to gas price spike, waiting...')
-                        txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=1800)  # Wait longer, e.g., 1800 seconds
-                    else:
-                        raise  # Re-raise the exception if the gas price hasn't spiked
-                    
-                # Update the status label with the block number the transaction was confirmed in
-                status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
+            try:
+                txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=300)
+            except web3.exceptions.TimeExhausted:
+                current_gas_price = w3.eth.gas_price
+                if current_gas_price > gas_price:
+                    status_label.config(text=f'Transaction {i+1} still pending due to gas price spike, waiting...')
+                    txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=1800)  # Wait longer, e.g., 1800 seconds
+                else:
+                    raise  # Re-raise the exception if the gas price hasn't spiked
+                
+            # Update the status label with the block number the transaction was confirmed in
+            status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
 
-                # Update the counters when a transaction is confirmed
-                transactions_count += 1
-                gas_spent = txn_receipt['gasUsed'] * gas_price
-                total_gas_spent += gas_spent
+            # Update the counters when a transaction is confirmed
+            transactions_count += 1
+            gas_spent = txn_receipt['gasUsed'] * gas_price
+            total_gas_spent += gas_spent
 
-                # Update the labels with the new values
-                transactions_count_label.config(text=f"XENfts Minted: {transactions_count}")
-                total_gas_spent_label.config(text=f"Total Gas Spent: {w3.from_wei(total_gas_spent, 'ether'):.4f}")
+            # Update the labels with the new values
+            transactions_count_label.config(text=f"XENfts Minted: {transactions_count}")
+            total_gas_spent_label.config(text=f"Total Gas Spent: {w3.from_wei(total_gas_spent, 'ether'):.4f}")
 
 
-                # Update the status label with the block number the transaction was confirmed in
-                status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
-                nonce +=1
+            # Update the status label with the block number the transaction was confirmed in
+            status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
+            nonce +=1
 
-                # Sleep for 5 seconds before the next iteration
-                time.sleep(5)
-            else:
-                # If the gas price is too high, update the status label and wait for 60 seconds
-                gas_price_gwei = w3.from_wei(gas_price, 'gwei')
-                status_label.config(text=f'Gas price too high: {gas_price_gwei:.4f} Gwei, waiting...')
-                time.sleep(60)
+            # Sleep for 5 seconds before the next iteration
+            time.sleep(5)
+        else:
+            # If the gas price is too high, update the status label and wait for 60 seconds
+            gas_price_gwei = w3.from_wei(gas_price, 'gwei')
+            status_label.config(text=f'Gas price too high: {gas_price_gwei:.4f} Gwei, waiting...')
+            time.sleep(60)
 
     except Exception as e:
         # If there is an unexpected error, update the UI background color and status label
