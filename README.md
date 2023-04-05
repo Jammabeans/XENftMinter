@@ -35,6 +35,6 @@ To run the XenftMinterBot, follow these steps for your specific platform:
 
 The status label at the bottom of the window will update as transactions are sent and confirmed.
 
-**Note:** Make sure to keep your private key secure and never share it with anyone.
+**Note:** Make sure to keep your private key secure and never share it with anyone. It's crucial to keep your private key secret, as it grants complete control over your cryptocurrency wallet. When trying out a new project, always create a new wallet and use its private key instead of your primary wallet's private key. This practice helps protect your main wallet and its funds from potential risks associated with new projects. By segregating your assets in separate wallets, you minimize the impact of potential vulnerabilities, ensuring the safety of your primary wallet and its holdings. Remember, safeguarding your private key is a vital aspect of maintaining the security of your digital assets.
 
 If you would like to donate to help more projects like this: ETH : 0x5152bB8109B43CDbC2A6E75AbE4909cA450e2EE9
