@@ -137,9 +137,13 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                 txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash, timeout=300)
             except web3.exceptions.TimeExhausted:
                 current_gas_price = w3.eth.gas_price
-                if gas_price < current_gas_price <= max_gas_price:
+                min_gas_price = gas_price * 1.1  # At least a 10% increase in gas price
+                
+                if min_gas_price < current_gas_price <= max_gas_price:
                     # Replace the transaction with a higher gas price
                     status_label.config(text=f'Transaction {i+1} still pending, replacing with a higher gas price...')
+                    
+                    # Use the current gas price, ensuring it's at least 10% higher than the original gas price
                     gas_price = current_gas_price
                     txn['gasPrice'] = gas_price
 
