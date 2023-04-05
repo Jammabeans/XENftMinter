@@ -107,8 +107,14 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                         if isinstance(error_data, dict) and error_data.get('message') == 'already known':
                             status_label.config(text=f'Transaction {i+1} already known, retrying...')
                             time.sleep(5)  # Wait for 5 seconds before retrying
+                        elif isinstance(error_data, dict) and error_data.get('message') == 'nonce too low':
+                            status_label.config(text=f'Transaction {i+1} nonce too low, retrying...')
+                            nonce = w3.eth.get_transaction_count(my_address)  # Update the nonce
+                            txn['nonce'] = nonce
+                            signed_txn = w3.eth.account.sign_transaction(txn, private_key)  # Sign the transaction with the updated nonce
+                            time.sleep(5)  # Wait for 5 seconds before retrying
                         else:
-                            raise  # Re-raise the exception if it's not an "already known" error
+                            raise  # Re-raise the exception if it's not an "already known" or "nonce too low" error
 
 
                 # Update the status label with the transaction hash
