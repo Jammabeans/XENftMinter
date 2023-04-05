@@ -19,6 +19,8 @@ from web3.middleware import geth_poa_middleware
 
 from ui import create_ui, run_ui, update_status_label, update_transactions_count_label, update_total_gas_spent_label
 
+from urllib3.exceptions import MaxRetryError
+
 
 # Load contract ABI from the xenftABI.json file
 with open('xenftABI.json') as abi_file:
@@ -115,6 +117,11 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                             time.sleep(5)  # Wait for 5 seconds before retrying
                         else:
                             raise  # Re-raise the exception if it's not an "already known" or "nonce too low" error
+
+                    except MaxRetryError:
+                        status_label.config(text=f'Max retries exceeded for transaction {i+1}, waiting and retrying...')
+                        time.sleep(30)  # Wait for 30 seconds before retrying
+
 
 
                 # Update the status label with the transaction hash
