@@ -64,11 +64,17 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
         nonce = w3.eth.get_transaction_count(my_address)    
 
         # Loop for the specified number of transactions
-        for i in range(loops):
+        for i in range(loops + 1):
 
             if stop_flag:
                 stop_flag = False
                 status_label.config(text=f'Stopped at transaction {i+1}')
+                
+                break
+
+            # Check if the desired number of NFTs has been minted
+            if transactions_count >= loops:
+                status_label.config(text=f'{loops} NFTs minted, stopping...')
                 break
 
             gas_price = w3.eth.gas_price
@@ -79,7 +85,7 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                 gas_price_gwei = w3.from_wei(gas_price, 'gwei')
                 status_label.config(text=f'Gas price too high: {gas_price_gwei:.4f} Gwei, waiting...')
                 time.sleep(60)
-                gas_price = w3.eth.gas_price
+                gas_price = w3.eth.gas_price 
 
             # Create a function call to bulkClaimRank with the given count and term
             function_call = contract.functions.bulkClaimRank(count, term)
@@ -176,8 +182,8 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
 
 
             # Update the status label with the block number the transaction was confirmed in
-            status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
-            nonce +=1
+            status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}, {transactions_count} NFTs minted')
+            nonce += 1
 
             # Sleep for 5 seconds before the next iteration
             time.sleep(5)
