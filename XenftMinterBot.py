@@ -21,6 +21,10 @@ from ui import create_ui, run_ui, update_status_label, update_transactions_count
 
 from urllib3.exceptions import MaxRetryError
 
+import random
+
+from status_messages import confirmed_status_messages, hash_status_messages
+
 
 # Load contract ABI from the xenftABI.json file
 with open('xenftABI.json') as abi_file:
@@ -136,7 +140,8 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
 
 
             # Update the status label with the transaction hash
-            status_label.config(text=f'Sent transaction {i+1} with hash {txn_hash.hex()}')
+            random_hash_message = random.choice(hash_status_messages)
+            status_label.config(text=random_hash_message.format(txn_num=i+1, txn_hash=txn_hash.hex()[:6]))
 
 
             try:
@@ -168,9 +173,6 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
                     raise  # Re-raise the exception if the gas price hasn't spiked
 
                 
-            # Update the status label with the block number the transaction was confirmed in
-            status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}')
-
             # Update the counters when a transaction is confirmed
             transactions_count += 1
             gas_spent = txn_receipt['gasUsed'] * gas_price
@@ -182,7 +184,8 @@ def send_transactions(status_label, transactions_count_label, total_gas_spent_la
 
 
             # Update the status label with the block number the transaction was confirmed in
-            status_label.config(text=f'Transaction {i+1} confirmed in block {txn_receipt["blockNumber"]}, {transactions_count} NFTs minted')
+            random_confirmed_message = random.choice(confirmed_status_messages)
+            status_label.config(text=random_confirmed_message.format(txn_num=i+1, block_num=txn_receipt["blockNumber"], nft_count=transactions_count))
             nonce += 1
 
             # Sleep for 5 seconds before the next iteration
